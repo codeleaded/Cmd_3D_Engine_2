@@ -9,28 +9,27 @@
 #elif defined _WIN32
 #include "F:/home/codeleaded/System/Static/Library/ConsoleEngine.h"
 #include "F:/home/codeleaded/System/Static/Container/Vector.h"
+#elif defined(__APPLE__)
+#error "Apple not supported!"
+#else
+#error "Platform not supported!"
 #endif
 
 
-typedef struct vec3d
-{
+typedef struct vec3d{
 	float x, y, z;
 } vec3d;
 
-typedef struct triangle
-{
+typedef struct triangle{
 	vec3d p[3];
-	wchar_t sym;
-	short col;
+	CPixel col;
 } triangle;
 
-typedef struct mesh
-{
+typedef struct mesh{
 	Vector tris;
 } mesh;
 
-typedef struct mat4x4
-{
+typedef struct mat4x4{
 	float m[4][4];
 } mat4x4;
 
@@ -52,35 +51,6 @@ void MultiplyMatrixVector(vec3d i, vec3d* o, mat4x4 m){
 	}
 }
 
-CHAR_INFO GetColour(float lum)
-{
-	short bg_col, fg_col;
-	wchar_t sym;
-	int pixel_bw = (int)(13.0f*lum);
-	switch (pixel_bw)
-	{
-	case 0: bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID; break;
-	case 1: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_QUARTER; break;
-	case 2: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_HALF; break;
-	case 3: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_THREEQUARTERS; break;
-	case 4: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_SOLID; break;
-	case 5: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_QUARTER; break;
-	case 6: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_HALF; break;
-	case 7: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_THREEQUARTERS; break;
-	case 8: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_SOLID; break;
-	case 9:  bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_QUARTER; break;
-	case 10: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_HALF; break;
-	case 11: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_THREEQUARTERS; break;
-	case 12: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_SOLID; break;
-	default:
-		bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID;
-	}
-	CHAR_INFO c;
-	c.Attributes = bg_col | fg_col;
-	c.Char.UnicodeChar = sym;
-	return c;
-}
-
 int QCompare(const void* p1,const void* p2){
 	triangle* t1 = (triangle*)p1;
 	triangle* t2 = (triangle*)p2;
@@ -89,7 +59,7 @@ int QCompare(const void* p1,const void* p2){
 	return z1 > z2;
 }
 
-void Setup(AlxWindow* w){
+void C_Setup(Console* c){
     meshCube.tris = Vector_New(sizeof(triangle));
     
     // SOUTH                                                     
@@ -132,7 +102,7 @@ void Setup(AlxWindow* w){
 	float fNear = 0.1f;
 	float fFar = 1000.0f;
 	float fFov = 90.0f;
-	float fAspectRatio = (float)Console_Height() / (float)Console_Width();
+	float fAspectRatio = (float)Console_Height(c) / (float)Console_Width(c);
 	float fFovRad = 1.0f / tanf(fFov * 0.5f / 180.0f * 3.14159f);
 	memset(matProj.m[0],0,4 * sizeof(float));
     memset(matProj.m[1],0,4 * sizeof(float));
@@ -145,13 +115,13 @@ void Setup(AlxWindow* w){
 	matProj.m[2][3] = 1.0f;
 	matProj.m[3][3] = 0.0f;
 }
-
-void Update(float w->ElapsedTime){
+void C_Update(Console* c){
     // Clear Screen
-	Console_Clear(PIXEL_SOLID, FG_BLACK);
+	Console_Clear(c,CPIXEL_SOLID,FG_BLACK);
+
 	// Set up rotation matrices
 	mat4x4 matRotZ, matRotX;
-	fTheta += 1.0f * w->ElapsedTime;
+	fTheta += 1.0f * c->ElapsedTime;
 	
     // Rotation Z
     memset(matRotZ.m[0],0,4 * sizeof(float));
@@ -221,25 +191,23 @@ void Update(float w->ElapsedTime){
 			
 			float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
 			
-			CHAR_INFO c = GetColour(dp);
-			triTranslated.col = c.Attributes;
-			triTranslated.sym = c.Char.UnicodeChar;
+			CPixel col = CPixel_Light(dp);
+			triTranslated.col = col;
 
 			MultiplyMatrixVector(triTranslated.p[0], &triProjected.p[0], matProj);
 			MultiplyMatrixVector(triTranslated.p[1], &triProjected.p[1], matProj);
 			MultiplyMatrixVector(triTranslated.p[2], &triProjected.p[2], matProj);
 			triProjected.col = triTranslated.col;
-			triProjected.sym = triTranslated.sym;
 			
 			triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
 			triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
 			triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
-			triProjected.p[0].x *= 0.5f * (float)Console_Width();
-			triProjected.p[0].y *= 0.5f * (float)Console_Height();
-			triProjected.p[1].x *= 0.5f * (float)Console_Width();
-			triProjected.p[1].y *= 0.5f * (float)Console_Height();
-			triProjected.p[2].x *= 0.5f * (float)Console_Width();
-			triProjected.p[2].y *= 0.5f * (float)Console_Height();
+			triProjected.p[0].x *= 0.5f * (float)Console_Width(c);
+			triProjected.p[0].y *= 0.5f * (float)Console_Height(c);
+			triProjected.p[1].x *= 0.5f * (float)Console_Width(c);
+			triProjected.p[1].y *= 0.5f * (float)Console_Height(c);
+			triProjected.p[2].x *= 0.5f * (float)Console_Width(c);
+			triProjected.p[2].y *= 0.5f * (float)Console_Height(c);
 			
 			Vector_Push(&vecTrianglesToRaster,&triProjected);
 		}
@@ -249,26 +217,34 @@ void Update(float w->ElapsedTime){
 
 	for(int i = 0;i<vecTrianglesToRaster.size;i++){
 		triangle triProjected = *(triangle*)Vector_Get(&vecTrianglesToRaster,i);
-		Console_RenderTriangle((Vec2){triProjected.p[0].x,triProjected.p[0].y},
-			                   (Vec2){triProjected.p[1].x,triProjected.p[1].y},
-			                   (Vec2){triProjected.p[2].x,triProjected.p[2].y},
-			                   (Pixel){triProjected.sym,triProjected.col});
-		//Console_RenderTriangleWire((Vec2){triProjected.p[0].x,triProjected.p[0].y},
-		//	                   	   (Vec2){triProjected.p[1].x,triProjected.p[1].y},
-		//	                   	   (Vec2){triProjected.p[2].x,triProjected.p[2].y},
-		//	                   	   (Pixel){PIXEL_SOLID, FG_BLACK},1.0f);
+		
+		Console_RenderTriangleWire(
+			c,
+			(Vec2){triProjected.p[0].x,triProjected.p[0].y},
+			(Vec2){triProjected.p[1].x,triProjected.p[1].y},
+			(Vec2){triProjected.p[2].x,triProjected.p[2].y},
+			triProjected.col,
+			1.0f
+		);
+		//Console_RenderTriangleWire(
+		//	c,
+		//	(Vec2){triProjected.p[0].x,triProjected.p[0].y},
+		//	(Vec2){triProjected.p[1].x,triProjected.p[1].y},
+		//	(Vec2){triProjected.p[2].x,triProjected.p[2].y},
+		//	(CPixel){CPIXEL_SOLID,FG_BLACK},
+		//	1.0f
+		//);
 	}
 	Vector_Free(&vecTrianglesToRaster);
 }
-
-void Delete(AlxWindow* w){
+void C_Delete(Console* c){
     Vector_Free(&meshCube.tris);
 }
 
 int main(){
     Console c;
-    if(Console_Create(&c,L"3D Engine",200,150,8,8,Setup,Update,Delete)){
-        Start();
+    if(Console_Create(&c,L"3D Engine",200,150,8,8,C_Setup,C_Update,C_Delete)){
+        Console_Start(&c);
     }
     return 0;
 }
