@@ -16,31 +16,31 @@
 #endif
 
 
-typedef struct vec3d{
+typedef struct Vec3D{
 	float x, y, z;
-} vec3d;
+} Vec3D;
 
-typedef struct triangle{
-	vec3d p[3];
+typedef struct Tri3D{
+	Vec3D p[3];
 	CPixel col;
-} triangle;
+} Tri3D;
 
 typedef struct mesh{
 	Vector tris;
 } mesh;
 
-typedef struct mat4x4{
+typedef struct M4x4D{
 	float m[4][4];
-} mat4x4;
+} M4x4D;
 
 mesh meshCube;
-mat4x4 matProj;
+M4x4D matProj;
 
-vec3d vCamera;
+Vec3D vCamera;
 
 float fTheta;
 
-void MultiplyMatrixVector(vec3d i, vec3d* o, mat4x4 m){
+void MultiplyMatrixVector(Vec3D i, Vec3D* o, M4x4D m){
 	o->x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z * m.m[2][0] + m.m[3][0];
 	o->y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z * m.m[2][1] + m.m[3][1];
 	o->z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z * m.m[2][2] + m.m[3][2];
@@ -52,50 +52,50 @@ void MultiplyMatrixVector(vec3d i, vec3d* o, mat4x4 m){
 }
 
 int QCompare(const void* p1,const void* p2){
-	triangle* t1 = (triangle*)p1;
-	triangle* t2 = (triangle*)p2;
+	Tri3D* t1 = (Tri3D*)p1;
+	Tri3D* t2 = (Tri3D*)p2;
 	float z1 = (t1->p[0].z + t1->p[1].z + t1->p[2].z) / 3.0f;
 	float z2 = (t2->p[0].z + t2->p[1].z + t2->p[2].z) / 3.0f;
 	return z1 > z2;
 }
 
 void C_Setup(Console* c){
-    meshCube.tris = Vector_New(sizeof(triangle));
+    meshCube.tris = Vector_New(sizeof(Tri3D));
     
     // SOUTH                                                     
-    triangle tri = {0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f};
+    Tri3D tri = {0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f};
     Vector_Push(&meshCube.tris,&tri);
-    tri = (triangle){0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f};
+    tri = (Tri3D){0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f};
     Vector_Push(&meshCube.tris,&tri);
     
     //EAST                                                     
-    tri = (triangle){ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f };
+    tri = (Tri3D){ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f };
     Vector_Push(&meshCube.tris,&tri);
-    tri = (triangle){ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f };
+    tri = (Tri3D){ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f };
     Vector_Push(&meshCube.tris,&tri);
     
     // NORTH                                                     
-    tri = (triangle){ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f };
+    tri = (Tri3D){ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f };
     Vector_Push(&meshCube.tris,&tri);
-    tri = (triangle){ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f };
+    tri = (Tri3D){ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f };
     Vector_Push(&meshCube.tris,&tri);
     
     // WEST                                                      
-    tri = (triangle){ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f };
+    tri = (Tri3D){ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f };
     Vector_Push(&meshCube.tris,&tri);
-    tri = (triangle){ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f };
+    tri = (Tri3D){ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f };
     Vector_Push(&meshCube.tris,&tri);
     
     // TOP                                                       
-    tri = (triangle){ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f };
+    tri = (Tri3D){ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f };
     Vector_Push(&meshCube.tris,&tri);
-    tri = (triangle){ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f };
+    tri = (Tri3D){ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f };
     Vector_Push(&meshCube.tris,&tri);
     
     // BOTTOM                                                    
-    tri = (triangle){ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f };
+    tri = (Tri3D){ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f };
     Vector_Push(&meshCube.tris,&tri);
-    tri = (triangle){ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f };
+    tri = (Tri3D){ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f };
     Vector_Push(&meshCube.tris,&tri);
 
 
@@ -120,7 +120,7 @@ void C_Update(Console* c){
 	Console_Clear(c,CPIXEL_SOLID,FG_BLACK);
 
 	// Set up rotation matrices
-	mat4x4 matRotZ, matRotX;
+	M4x4D matRotZ, matRotX;
 	fTheta += 1.0f * c->ElapsedTime;
 	
     // Rotation Z
@@ -146,11 +146,11 @@ void C_Update(Console* c){
 	matRotX.m[2][2] = cosf(fTheta * 0.5f);
 	matRotX.m[3][3] = 1;
 
-	Vector vecTrianglesToRaster = Vector_New(sizeof(triangle));
+	Vector vecTrianglesToRaster = Vector_New(sizeof(Tri3D));
 	
 	for (int i = 0;i<meshCube.tris.size;i++){
-        triangle tri = *(triangle*)Vector_Get(&meshCube.tris,i);
-		triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
+        Tri3D tri = *(Tri3D*)Vector_Get(&meshCube.tris,i);
+		Tri3D triProjected, triTranslated, triRotatedZ, triRotatedZX;
 		// Rotate in Z-Axis
 		MultiplyMatrixVector(tri.p[0], &triRotatedZ.p[0], matRotZ);
 		MultiplyMatrixVector(tri.p[1], &triRotatedZ.p[1], matRotZ);
@@ -165,7 +165,7 @@ void C_Update(Console* c){
 		triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
 		triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
 
-		vec3d normal, line1, line2;
+		Vec3D normal, line1, line2;
 		line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
 		line1.y = triTranslated.p[1].y - triTranslated.p[0].y;
 		line1.z = triTranslated.p[1].z - triTranslated.p[0].z;
@@ -185,7 +185,7 @@ void C_Update(Console* c){
 		   normal.y * (triTranslated.p[0].y - vCamera.y) +
 		   normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
 		{
-			vec3d light_direction = { 0.0f, 0.0f, -1.0f };
+			Vec3D light_direction = { 0.0f, 0.0f, -1.0f };
 			float l = sqrtf(light_direction.x*light_direction.x + light_direction.y*light_direction.y + light_direction.z*light_direction.z);
 			light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
 			
@@ -216,7 +216,7 @@ void C_Update(Console* c){
 	qsort(vecTrianglesToRaster.Memory,vecTrianglesToRaster.size,vecTrianglesToRaster.ELEMENT_SIZE,QCompare);
 
 	for(int i = 0;i<vecTrianglesToRaster.size;i++){
-		triangle triProjected = *(triangle*)Vector_Get(&vecTrianglesToRaster,i);
+		Tri3D triProjected = *(Tri3D*)Vector_Get(&vecTrianglesToRaster,i);
 		
 		Console_RenderTriangleWire(
 			c,
